@@ -1,0 +1,16 @@
+__pycache__/
+/__pycache__
+Include
+Lib
+Scripts
+.env
+pyvenv.cfg
+requirements_old.txt
+data
+bin
+include
+lib
+lib64
+share
+auth.json
+*.csv
