@@ -4,6 +4,13 @@ Include
 Lib
 Scripts
 .env
+.env.uat
+build/
+dist/
+.env-local
+dist.zip
+*.stackdump
+*.spec
 pyvenv.cfg
 requirements_old.txt
 data
