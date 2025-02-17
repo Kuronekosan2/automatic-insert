@@ -380,7 +380,7 @@ class userUpdateHandler(SqlFunction):
                     continue
 
             result = self.create_data('user_has_group', 
-                ['user_id', 'branch_id'], 
+                ['user_id', 'group_id'], 
                 [user_id, group_id]
             )
             if result:
