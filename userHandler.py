@@ -36,9 +36,9 @@ class userUpdateHandler(SqlFunction):
             print("============================================\n")
         
         self.update_group_has_branch(data_branch, data_group)
-        # self.update_user_has_branch(data_user, data_branch)
-        # print("[USER-HAS-BRANCH] Finish Inserting User Has Branch...\n")
-        # return self.data_changed_logs
+        self.update_user_has_branch(data_user, data_branch)
+        self.update_user_has_roles(data_user, data_role)
+        self.update_user_has_group(data_user, data_group)
 
 
     def update_user(self, row: tuple, col: list, generated_number: int):
@@ -305,10 +305,85 @@ class userUpdateHandler(SqlFunction):
             print("[GROUP-HAS-BRANCH] Error: ", e)
             raise InterruptedError(e)
         
-    # def update_user_has_branch(self, user_id: list, branch_id: list):
-    #     """Ini function buat update user_hasMany_branch le."""
-    #     if any(not self.read_data('users', 'id', data) for data in user_id):
-    #         return False
-    #     if any(not self.read_data('master_branch', 'id', data) for data in branch_id):
-    #         return False
-    #     try:
+    def update_user_has_branch(self, user_id_list: list, branch_id_list: list):
+        """Ini function buat update user_hasMany_branch le."""
+
+        if any(not self.read_data('users', 'user_id', data) for data in user_id_list):
+            return False
+        if any(not self.read_data('master_branch', 'id', data) for data in branch_id_list):
+            return False
+
+        existing_pairs = {(row["user_id"], row["branch_id"]) for row in self.reads_data('user_has_branch')}
+        for user_id, branch_id in zip(user_id_list, branch_id_list):
+            user_exists = any(row[0] == user_id for row in existing_pairs)
+
+            if user_exists:
+                if (user_id, branch_id) in existing_pairs:
+                    print(f"[USER-HAS-BRANCH] Skipping existing user-branch pair: ({user_id}, {branch_id})")
+                    continue
+
+            result = self.create_data('user_has_branch', 
+                ['user_id', 'branch_id'], 
+                [user_id, branch_id]
+            )
+            if result:
+                print(f"[USER-HAS-BRANCH] Inserted new user-branch pair: ({user_id}, {branch_id})")
+
+        return True
+    
+    def update_user_has_roles(self, user_id_list: list, roles_id_list: list):
+        """Ini function buat update user_hasOne_roles le."""
+
+        if any(not self.read_data('users', 'user_id', data) for data in user_id_list):
+            return False
+        if any(not self.read_data('roles', 'id', data) for data in roles_id_list):
+            return False
+
+        existing_pairs = {(row["role_id"], row["model_id"]) for row in self.reads_data('model_has_roles')}
+        for role_id, model_id in zip(roles_id_list, user_id_list):
+            # Check if user_id exists in model_has_roles
+            user_exists = any(row[1] == model_id for row in existing_pairs)
+
+            if user_exists:
+                # Check if user_id already has the same roles_id
+                if (role_id, model_id) in existing_pairs:
+                    print(f"[USER-HAS-ROLES] Skipping existing user-roles pair: ({role_id}, {model_id})")
+                    continue  # Skip inserting
+
+            # Insert new row if the pair does not exist
+            result = self.create_data(
+                'model_has_roles', 
+                ['role_id', 'model_type', 'model_id', 'team_id'], 
+                [role_id, r'App\Models\User', model_id, '00000000-0000-0000-0000-000000000000']
+            )
+            
+            if result:
+                print(f"[USER-HAS-ROLES] Inserted new user-roles pair: ({role_id}, {model_id})")
+
+        return True
+    
+    def update_user_has_group(self, user_id_list: list, group_id_list: list):
+        """Ini function buat update user_hasOne_group le."""
+
+        if any(not self.read_data('users', 'user_id', data) for data in user_id_list):
+            return False
+        if any(not self.read_data('groups', 'id', data) for data in group_id_list):
+            return False
+
+        existing_pairs = {(row["user_id"], row["group_id"]) for row in self.reads_data('user_has_group')}
+        for user_id, group_id in zip(user_id_list, group_id_list):
+            user_exists = any(row[0] == user_id for row in existing_pairs)
+
+            if user_exists:
+                if (user_id, group_id) in existing_pairs:
+                    print(f"[USER-HAS-GROUPS] Skipping existing user-group pair: ({user_id}, {group_id})")
+                    continue
+
+            result = self.create_data('user_has_group', 
+                ['user_id', 'branch_id'], 
+                [user_id, group_id]
+            )
+            if result:
+                print(f"[USER-HAS-GROUPS] Inserted new user-group pair: ({user_id}, {group_id})")
+
+        return True
